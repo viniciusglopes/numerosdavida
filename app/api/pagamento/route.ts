@@ -38,11 +38,21 @@ export async function POST(request: NextRequest) {
       } catch {}
     }
 
-    return NextResponse.json({
+    const response: any = {
       status: payment.status,
       id: payment.id,
       detail: payment.status_detail,
-    })
+    }
+
+    if (payment.status === 'pending' && payment.point_of_interaction?.transaction_data) {
+      response.pix = {
+        qr_code: payment.point_of_interaction.transaction_data.qr_code,
+        qr_code_base64: payment.point_of_interaction.transaction_data.qr_code_base64,
+        ticket_url: payment.point_of_interaction.transaction_data.ticket_url,
+      }
+    }
+
+    return NextResponse.json(response)
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

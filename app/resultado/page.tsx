@@ -20,6 +20,8 @@ function ResultadoContent() {
   const [mostrarPagamentoBook, setMostrarPagamentoBook] = useState(false)
   const [carregandoPagamentoBook, setCarregandoPagamentoBook] = useState(false)
   const [gerandoBook, setGerandoBook] = useState(false)
+  const [pixData, setPixData] = useState<{ qr_code: string; qr_code_base64: string; ticket_url: string } | null>(null)
+  const [copiado, setCopiado] = useState(false)
 
   const nome = searchParams.get('nome') || ''
   const dia = parseInt(searchParams.get('dia') || '1')
@@ -95,12 +97,16 @@ function ResultadoContent() {
             if (data.status === 'approved') {
               onApproved()
             } else if (data.status === 'pending' && data.id) {
+              if (data.pix) {
+                setPixData(data.pix)
+              }
               const poll = setInterval(async () => {
                 try {
                   const check = await fetch(`/api/pagamento-status?id=${data.id}`)
                   const result = await check.json()
                   if (result.status === 'approved') {
                     clearInterval(poll)
+                    setPixData(null)
                     onApproved()
                   }
                 } catch {}
@@ -257,6 +263,46 @@ function ResultadoContent() {
               </div>
             )}
             <div id="mp-bricks-container" />
+
+            {/* QR Code Pix inline */}
+            {pixData && (
+              <div className="mt-6 text-center border-t border-purple-500/30 pt-6">
+                <p className="text-lg font-bold text-gold mb-1">Pague com Pix</p>
+                <p className="text-xs text-purple-300 mb-4">Escaneie o QR Code ou copie o código abaixo</p>
+
+                {pixData.qr_code_base64 && (
+                  <div className="bg-white rounded-xl p-4 inline-block mb-4">
+                    <img
+                      src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                      alt="QR Code Pix"
+                      className="w-48 h-48"
+                    />
+                  </div>
+                )}
+
+                {pixData.qr_code && (
+                  <div className="mb-4">
+                    <div className="bg-purple-900/50 rounded-xl p-3 text-xs text-purple-200 break-all max-h-20 overflow-y-auto mb-2">
+                      {pixData.qr_code}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(pixData.qr_code)
+                        setCopiado(true)
+                        setTimeout(() => setCopiado(false), 3000)
+                      }}
+                      className="btn-gold px-6 py-2 rounded-full text-sm"
+                    >
+                      {copiado ? '✅ Copiado!' : '📋 Copiar código Pix'}
+                    </button>
+                  </div>
+                )}
+
+                <p className="text-xs text-purple-400 animate-pulse mt-2">
+                  ⏳ Aguardando confirmação do pagamento...
+                </p>
+              </div>
+            )}
           </div>
         )}
 
