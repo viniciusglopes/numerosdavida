@@ -67,18 +67,10 @@ function ResultadoContent() {
       await bricksBuilder.create('payment', containerId, {
         initialization: {
           amount,
-          payer: { email: '' },
         },
         customization: {
-          visual: {
-            style: { theme: 'dark' },
-            hideFormTitle: true,
-          },
           paymentMethods: {
             maxInstallments: 1,
-            creditCard: 'all',
-            debitCard: 'all',
-            bankTransfer: 'all',
           },
         },
         callbacks: {
