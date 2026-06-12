@@ -50,7 +50,7 @@ function ResultadoContent() {
     })
   }, [])
 
-  const initBricks = useCallback(async (preferenceId: string, containerId: string, amount: number, onApproved: () => void) => {
+  const initBricks = useCallback(async (containerId: string, amount: number, onApproved: () => void) => {
     const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || ''
     if (!publicKey) return
 
@@ -58,7 +58,7 @@ function ResultadoContent() {
     const bricksBuilder = mp.bricks()
 
     await bricksBuilder.create('payment', containerId, {
-      initialization: { amount, preferenceId },
+      initialization: { amount },
       customization: {
         visual: { style: { theme: 'dark' } },
         paymentMethods: { maxInstallments: 1 },
@@ -95,24 +95,11 @@ function ResultadoContent() {
     setMostrarPagamento(true)
 
     try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, destino: mapa.destino }),
-      })
-      const data = await res.json()
-
-      if (data.preference_id) {
-        await loadMPSdk()
-        initBricks(data.preference_id, 'mp-bricks-container', 9.90, () => {
-          setDesbloqueado(true)
-          setMostrarPagamento(false)
-        })
-      } else {
-        alert('Erro ao iniciar pagamento. Tente novamente.')
+      await loadMPSdk()
+      initBricks('mp-bricks-container', 9.90, () => {
+        setDesbloqueado(true)
         setMostrarPagamento(false)
-        setCarregandoPagamento(false)
-      }
+      })
     } catch {
       alert('Erro de conexão. Tente novamente.')
       setMostrarPagamento(false)
@@ -125,24 +112,11 @@ function ResultadoContent() {
     setMostrarPagamentoBook(true)
 
     try {
-      const res = await fetch('/api/checkout-book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome }),
-      })
-      const data = await res.json()
-
-      if (data.preference_id) {
-        await loadMPSdk()
-        initBricks(data.preference_id, 'mp-bricks-book-container', 6.90, () => {
-          setBookComprado(true)
-          setMostrarPagamentoBook(false)
-        })
-      } else {
-        alert('Erro ao iniciar pagamento. Tente novamente.')
+      await loadMPSdk()
+      initBricks('mp-bricks-book-container', 6.90, () => {
+        setBookComprado(true)
         setMostrarPagamentoBook(false)
-        setCarregandoPagamentoBook(false)
-      }
+      })
     } catch {
       alert('Erro de conexão. Tente novamente.')
       setMostrarPagamentoBook(false)
