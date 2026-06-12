@@ -35,6 +35,14 @@ export default function TestePagamento() {
           initialization: {
             amount: 9.90,
           },
+          customization: {
+            paymentMethods: {
+              creditCard: 'all',
+              debitCard: 'all',
+              bankTransfer: ['pix'],
+              maxInstallments: 1,
+            },
+          },
           callbacks: {
             onReady: () => {
               setStatus('Brick pronto!')

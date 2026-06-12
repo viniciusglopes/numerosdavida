@@ -70,6 +70,9 @@ function ResultadoContent() {
         },
         customization: {
           paymentMethods: {
+            creditCard: 'all',
+            debitCard: 'all',
+            bankTransfer: ['pix'],
             maxInstallments: 1,
           },
         },
