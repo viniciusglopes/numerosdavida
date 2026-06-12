@@ -278,9 +278,6 @@ function ResultadoContent() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-purple-400/40 pb-8">
-          Apenas para fins de entretenimento
-        </p>
       </div>
     </main>
   )

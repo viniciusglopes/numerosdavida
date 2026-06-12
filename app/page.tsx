@@ -42,9 +42,6 @@ export default function Home() {
           ))}
         </div>
 
-        <p className="text-xs text-purple-400/40 mt-12">
-          Apenas para fins de entretenimento
-        </p>
       </div>
     </main>
   )
