@@ -52,42 +52,65 @@ function ResultadoContent() {
 
   const initBricks = useCallback(async (containerId: string, amount: number, onApproved: () => void) => {
     const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || ''
-    if (!publicKey) return
+    if (!publicKey) {
+      console.error('MP Public Key not found')
+      return
+    }
 
-    const mp = new window.MercadoPago(publicKey, { locale: 'pt-BR' })
-    const bricksBuilder = mp.bricks()
+    try {
+      const mp = new window.MercadoPago(publicKey, { locale: 'pt-BR' })
+      const bricksBuilder = mp.bricks()
 
-    await bricksBuilder.create('payment', containerId, {
-      initialization: { amount },
-      customization: {
-        visual: { style: { theme: 'dark' } },
-        paymentMethods: { maxInstallments: 1 },
-      },
-      callbacks: {
-        onReady: () => {
-          setCarregandoPagamento(false)
-          setCarregandoPagamentoBook(false)
+      const existingContainer = document.getElementById(containerId)
+      if (existingContainer) existingContainer.innerHTML = ''
+
+      await bricksBuilder.create('payment', containerId, {
+        initialization: {
+          amount,
+          payer: { email: '' },
         },
-        onSubmit: async ({ selectedPaymentMethod, formData }: any) => {
-          const res = await fetch('/api/pagamento', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
-          })
-          const data = await res.json()
-          if (data.status === 'approved') {
-            onApproved()
-          } else if (data.status === 'pending') {
-            alert('Pagamento pendente! Assim que confirmado, seu conteúdo será desbloqueado.')
-          } else {
-            alert('Pagamento não aprovado. Tente novamente.')
-          }
+        customization: {
+          visual: {
+            style: { theme: 'dark' },
+            hideFormTitle: true,
+          },
+          paymentMethods: {
+            maxInstallments: 1,
+            creditCard: 'all',
+            debitCard: 'all',
+            bankTransfer: 'all',
+          },
         },
-        onError: (error: any) => {
-          console.error('Bricks error:', error)
+        callbacks: {
+          onReady: () => {
+            setCarregandoPagamento(false)
+            setCarregandoPagamentoBook(false)
+          },
+          onSubmit: async ({ selectedPaymentMethod, formData }: any) => {
+            const res = await fetch('/api/pagamento', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData),
+            })
+            const data = await res.json()
+            if (data.status === 'approved') {
+              onApproved()
+            } else if (data.status === 'pending') {
+              alert('Pagamento pendente! Assim que confirmado, seu conteúdo será desbloqueado.')
+            } else {
+              alert('Pagamento não aprovado. Tente novamente.')
+            }
+          },
+          onError: (error: any) => {
+            console.error('Bricks error:', error)
+            alert('Erro no formulário de pagamento: ' + (error?.message || JSON.stringify(error)))
+          },
         },
-      },
-    })
+      })
+    } catch (err: any) {
+      console.error('Bricks init error:', err)
+      alert('Erro ao inicializar pagamento: ' + (err?.message || JSON.stringify(err)))
+    }
   }, [])
 
   const handleDesbloquear = async () => {
