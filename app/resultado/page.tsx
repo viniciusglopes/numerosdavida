@@ -16,6 +16,10 @@ function ResultadoContent() {
   const [desbloqueado, setDesbloqueado] = useState(false)
   const [mostrarPagamento, setMostrarPagamento] = useState(false)
   const [carregandoPagamento, setCarregandoPagamento] = useState(false)
+  const [bookComprado, setBookComprado] = useState(false)
+  const [mostrarPagamentoBook, setMostrarPagamentoBook] = useState(false)
+  const [carregandoPagamentoBook, setCarregandoPagamentoBook] = useState(false)
+  const [gerandoBook, setGerandoBook] = useState(false)
 
   const nome = searchParams.get('nome') || ''
   const dia = parseInt(searchParams.get('dia') || '1')
@@ -32,31 +36,37 @@ function ResultadoContent() {
     if (paid === '1') setDesbloqueado(true)
   }, [paid])
 
-  const initBricks = useCallback(async (preferenceId: string) => {
+  const loadMPSdk = useCallback((): Promise<void> => {
+    return new Promise((resolve) => {
+      if (document.getElementById('mp-sdk')) {
+        resolve()
+        return
+      }
+      const script = document.createElement('script')
+      script.id = 'mp-sdk'
+      script.src = 'https://sdk.mercadopago.com/js/v2'
+      script.onload = () => resolve()
+      document.head.appendChild(script)
+    })
+  }, [])
+
+  const initBricks = useCallback(async (preferenceId: string, containerId: string, amount: number, onApproved: () => void) => {
     const publicKey = process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || ''
     if (!publicKey) return
 
     const mp = new window.MercadoPago(publicKey, { locale: 'pt-BR' })
     const bricksBuilder = mp.bricks()
 
-    await bricksBuilder.create('payment', 'mp-bricks-container', {
-      initialization: {
-        amount: 9.90,
-        preferenceId,
-      },
+    await bricksBuilder.create('payment', containerId, {
+      initialization: { amount, preferenceId },
       customization: {
-        visual: {
-          style: {
-            theme: 'dark',
-          },
-        },
-        paymentMethods: {
-          maxInstallments: 1,
-        },
+        visual: { style: { theme: 'dark' } },
+        paymentMethods: { maxInstallments: 1 },
       },
       callbacks: {
         onReady: () => {
           setCarregandoPagamento(false)
+          setCarregandoPagamentoBook(false)
         },
         onSubmit: async ({ selectedPaymentMethod, formData }: any) => {
           const res = await fetch('/api/pagamento', {
@@ -66,10 +76,9 @@ function ResultadoContent() {
           })
           const data = await res.json()
           if (data.status === 'approved') {
-            setDesbloqueado(true)
-            setMostrarPagamento(false)
+            onApproved()
           } else if (data.status === 'pending') {
-            alert('Pagamento pendente! Assim que confirmado, seu mapa será desbloqueado.')
+            alert('Pagamento pendente! Assim que confirmado, seu conteúdo será desbloqueado.')
           } else {
             alert('Pagamento não aprovado. Tente novamente.')
           }
@@ -94,15 +103,11 @@ function ResultadoContent() {
       const data = await res.json()
 
       if (data.preference_id) {
-        if (!document.getElementById('mp-sdk')) {
-          const script = document.createElement('script')
-          script.id = 'mp-sdk'
-          script.src = 'https://sdk.mercadopago.com/js/v2'
-          script.onload = () => initBricks(data.preference_id)
-          document.head.appendChild(script)
-        } else {
-          initBricks(data.preference_id)
-        }
+        await loadMPSdk()
+        initBricks(data.preference_id, 'mp-bricks-container', 9.90, () => {
+          setDesbloqueado(true)
+          setMostrarPagamento(false)
+        })
       } else {
         alert('Erro ao iniciar pagamento. Tente novamente.')
         setMostrarPagamento(false)
@@ -115,6 +120,58 @@ function ResultadoContent() {
     }
   }
 
+  const handleComprarBook = async () => {
+    setCarregandoPagamentoBook(true)
+    setMostrarPagamentoBook(true)
+
+    try {
+      const res = await fetch('/api/checkout-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome }),
+      })
+      const data = await res.json()
+
+      if (data.preference_id) {
+        await loadMPSdk()
+        initBricks(data.preference_id, 'mp-bricks-book-container', 6.90, () => {
+          setBookComprado(true)
+          setMostrarPagamentoBook(false)
+        })
+      } else {
+        alert('Erro ao iniciar pagamento. Tente novamente.')
+        setMostrarPagamentoBook(false)
+        setCarregandoPagamentoBook(false)
+      }
+    } catch {
+      alert('Erro de conexão. Tente novamente.')
+      setMostrarPagamentoBook(false)
+      setCarregandoPagamentoBook(false)
+    }
+  }
+
+  const handleBaixarBook = async () => {
+    setGerandoBook(true)
+    try {
+      const res = await fetch('/api/gerar-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, dia, mes, ano }),
+      })
+      if (!res.ok) throw new Error('Erro ao gerar')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `book-numerologico-${nome.split(' ')[0].toLowerCase()}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Erro ao gerar o Book. Tente novamente.')
+    }
+    setGerandoBook(false)
+  }
+
   const primeiroNome = nome.split(' ')[0]
 
   return (
@@ -122,7 +179,6 @@ function ResultadoContent() {
       <Stars />
 
       <div className="relative z-10 w-full max-w-lg mx-auto space-y-6">
-        {/* Header */}
         <div className="text-center">
           <span className="text-5xl block mb-3 animate-float">🔮</span>
           <h1 className="text-3xl font-bold gradient-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
@@ -225,7 +281,7 @@ function ResultadoContent() {
           )}
         </div>
 
-        {/* Bricks payment container */}
+        {/* Bricks payment container - Mapa */}
         {mostrarPagamento && !desbloqueado && (
           <div className="card-mystic rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
@@ -247,17 +303,108 @@ function ResultadoContent() {
           </div>
         )}
 
-        {/* Sucesso */}
+        {/* Sucesso + Upsell Book */}
         {desbloqueado && (
-          <div className="card-mystic rounded-2xl p-6 text-center border-2 border-gold/30">
-            <span className="text-4xl block mb-2">🎉</span>
-            <h3 className="text-lg font-bold text-gold mb-1" style={{ fontFamily: 'var(--font-playfair)' }}>
-              Mapa Desbloqueado!
-            </h3>
-            <p className="text-sm text-purple-300">
-              Seu mapa numerológico completo está disponível acima. Aproveite todas as revelações!
-            </p>
-          </div>
+          <>
+            <div className="card-mystic rounded-2xl p-6 text-center border-2 border-gold/30">
+              <span className="text-4xl block mb-2">🎉</span>
+              <h3 className="text-lg font-bold text-gold mb-1" style={{ fontFamily: 'var(--font-playfair)' }}>
+                Mapa Desbloqueado!
+              </h3>
+              <p className="text-sm text-purple-300">
+                Seu mapa numerológico completo está disponível acima.
+              </p>
+            </div>
+
+            {/* UPSELL: Book Numerológico */}
+            {!bookComprado && !mostrarPagamentoBook && (
+              <div className="card-mystic rounded-2xl p-6 relative overflow-hidden border-2 border-purple-500/30">
+                <div className="absolute top-0 right-0 bg-gold text-purple-dark text-xs font-bold px-3 py-1 rounded-bl-xl">
+                  OFERTA ESPECIAL
+                </div>
+                <div className="text-center mt-2">
+                  <span className="text-4xl block mb-3">📖</span>
+                  <h3 className="text-xl font-bold gradient-gold mb-2" style={{ fontFamily: 'var(--font-playfair)' }}>
+                    Quer ir mais fundo?
+                  </h3>
+                  <p className="text-sm text-purple-200/80 mb-4">
+                    Receba seu Book Numerológico Completo em PDF — personalizado com seu nome e todos os seus números
+                  </p>
+                </div>
+
+                <ul className="text-sm text-purple-200 space-y-2 mb-5">
+                  <li className="flex items-center gap-2">
+                    <span className="text-gold">📊</span> Análise aprofundada de cada número
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-gold">📅</span> Previsões mensais 2026
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-gold">💕</span> Tabela de compatibilidade completa
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-gold">🍀</span> Números, cores e dia da sorte
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-gold">💡</span> Dicas práticas + afirmação pessoal
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-gold">📄</span> PDF para guardar para sempre
+                  </li>
+                </ul>
+
+                <div className="text-center mb-4">
+                  <p className="text-xs text-purple-400 line-through">De R$ 19,90</p>
+                  <p className="text-3xl font-bold text-gold">R$ 6,90</p>
+                  <p className="text-xs text-purple-300">Adicional único · Download imediato</p>
+                </div>
+
+                <button onClick={handleComprarBook} disabled={carregandoPagamentoBook}
+                  className="btn-gold w-full py-4 rounded-full text-lg animate-pulse-gold disabled:opacity-50">
+                  {carregandoPagamentoBook ? '⏳ Carregando...' : '📖 Quero meu Book por R$ 6,90'}
+                </button>
+              </div>
+            )}
+
+            {/* Bricks payment container - Book */}
+            {mostrarPagamentoBook && !bookComprado && (
+              <div className="card-mystic rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                    Pagamento do Book
+                  </h3>
+                  <button onClick={() => { setMostrarPagamentoBook(false); setCarregandoPagamentoBook(false) }}
+                    className="text-purple-400 hover:text-purple-300 text-sm">
+                    ✕ Fechar
+                  </button>
+                </div>
+                {carregandoPagamentoBook && (
+                  <div className="text-center py-8">
+                    <span className="text-2xl animate-pulse">⏳</span>
+                    <p className="text-purple-300 text-sm mt-2">Carregando formulário de pagamento...</p>
+                  </div>
+                )}
+                <div id="mp-bricks-book-container" />
+              </div>
+            )}
+
+            {/* Book comprado - Download */}
+            {bookComprado && (
+              <div className="card-mystic rounded-2xl p-6 text-center border-2 border-gold/30">
+                <span className="text-4xl block mb-2">📖</span>
+                <h3 className="text-lg font-bold text-gold mb-2" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  Book Numerológico Adquirido!
+                </h3>
+                <p className="text-sm text-purple-300 mb-4">
+                  Seu Book personalizado está pronto para download.
+                </p>
+                <button onClick={handleBaixarBook} disabled={gerandoBook}
+                  className="btn-gold px-8 py-3 rounded-full text-sm disabled:opacity-50">
+                  {gerandoBook ? '⏳ Gerando PDF...' : '📥 Baixar meu Book (PDF)'}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Depoimentos */}

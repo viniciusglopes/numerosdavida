@@ -10,7 +10,12 @@ interface QuizData {
   mes: string
   ano: string
   genero: string
+  periodo_nascimento: string
+  numero_favorito: string
+  elemento: string
   foco: string
+  desafio: string
+  sentimento_futuro: string
   relacionamento: string
   genero_parceiro: string
 }
@@ -28,16 +33,48 @@ const FOCOS = [
   { id: 'autoconhecimento', icon: '🔮', label: 'Autoconhecimento' },
 ]
 
+const PERIODOS = [
+  { id: 'madrugada', icon: '🌙', label: 'Madrugada (00h–06h)' },
+  { id: 'manha', icon: '🌅', label: 'Manhã (06h–12h)' },
+  { id: 'tarde', icon: '☀️', label: 'Tarde (12h–18h)' },
+  { id: 'noite', icon: '🌆', label: 'Noite (18h–00h)' },
+  { id: 'nao_sei', icon: '❓', label: 'Não sei' },
+]
+
+const ELEMENTOS = [
+  { id: 'fogo', icon: '🔥', label: 'Fogo', desc: 'Paixão e energia' },
+  { id: 'agua', icon: '🌊', label: 'Água', desc: 'Emoção e intuição' },
+  { id: 'terra', icon: '🌿', label: 'Terra', desc: 'Estabilidade e força' },
+  { id: 'ar', icon: '💨', label: 'Ar', desc: 'Liberdade e intelecto' },
+]
+
+const DESAFIOS = [
+  { id: 'financeiro', icon: '💸', label: 'Financeiro' },
+  { id: 'emocional', icon: '💔', label: 'Emocional' },
+  { id: 'profissional', icon: '💼', label: 'Profissional' },
+  { id: 'saude', icon: '🏥', label: 'Saúde' },
+  { id: 'espiritual', icon: '🙏', label: 'Espiritual' },
+]
+
+const SENTIMENTOS = [
+  { id: 'otimista', icon: '😊', label: 'Otimista' },
+  { id: 'ansioso', icon: '😰', label: 'Ansioso(a)' },
+  { id: 'curioso', icon: '🤔', label: 'Curioso(a)' },
+  { id: 'incerto', icon: '😶', label: 'Incerto(a)' },
+]
+
 export default function QuizPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<QuizData>({
     nome: '', dia: '', mes: '', ano: '',
-    genero: '', foco: '', relacionamento: '', genero_parceiro: '',
+    genero: '', periodo_nascimento: '', numero_favorito: '',
+    elemento: '', foco: '', desafio: '', sentimento_futuro: '',
+    relacionamento: '', genero_parceiro: '',
   })
 
-  const totalSteps = 6
+  const totalSteps = 11
   const progress = ((step + 1) / totalSteps) * 100
 
   const update = (field: keyof QuizData, value: string) => {
@@ -47,6 +84,11 @@ export default function QuizPage() {
   const next = () => setStep(s => s + 1)
   const prev = () => setStep(s => Math.max(0, s - 1))
 
+  const autoAdvance = (field: keyof QuizData, value: string) => {
+    update(field, value)
+    setTimeout(() => setStep(s => s + 1), 300)
+  }
+
   const handleSubmit = async () => {
     setLoading(true)
     const params = new URLSearchParams({
@@ -55,7 +97,12 @@ export default function QuizPage() {
       mes: data.mes,
       ano: data.ano,
       genero: data.genero,
+      periodo: data.periodo_nascimento,
+      numfav: data.numero_favorito,
+      elem: data.elemento,
       foco: data.foco,
+      desafio: data.desafio,
+      sentimento: data.sentimento_futuro,
       rel: data.relacionamento,
       gp: data.genero_parceiro,
     })
@@ -67,19 +114,25 @@ export default function QuizPage() {
       case 0: return data.nome.trim().length >= 2
       case 1: return data.dia && data.mes && data.ano && parseInt(data.dia) >= 1 && parseInt(data.dia) <= 31 && parseInt(data.ano) >= 1940 && parseInt(data.ano) <= 2010
       case 2: return !!data.genero
-      case 3: return !!data.foco
-      case 4: return !!data.relacionamento
-      case 5: return !!data.genero_parceiro
+      case 3: return !!data.periodo_nascimento
+      case 4: return !!data.numero_favorito
+      case 5: return !!data.elemento
+      case 6: return !!data.foco
+      case 7: return !!data.desafio
+      case 8: return !!data.sentimento_futuro
+      case 9: return !!data.relacionamento
+      case 10: return !!data.genero_parceiro
       default: return false
     }
   }
+
+  const isAutoAdvanceStep = [2, 3, 5, 6, 7, 8, 9].includes(step)
 
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center px-4 py-8">
       <Stars />
 
       <div className="relative z-10 w-full max-w-lg mx-auto">
-        {/* Progress bar */}
         <div className="mb-8">
           <div className="flex justify-between text-xs text-purple-400 mb-2">
             <span>Passo {step + 1} de {totalSteps}</span>
@@ -91,7 +144,6 @@ export default function QuizPage() {
         </div>
 
         <div className="card-mystic rounded-2xl p-8">
-          {/* Step 0: Nome */}
           {step === 0 && (
             <div className="space-y-6">
               <div className="text-center">
@@ -114,7 +166,6 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Step 1: Data de Nascimento */}
           {step === 1 && (
             <div className="space-y-6">
               <div className="text-center">
@@ -166,7 +217,6 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Step 2: Gênero */}
           {step === 2 && (
             <div className="space-y-6">
               <div className="text-center">
@@ -180,7 +230,7 @@ export default function QuizPage() {
                   { id: 'feminino', icon: '👩', label: 'Feminino' },
                   { id: 'masculino', icon: '👨', label: 'Masculino' },
                 ].map(g => (
-                  <button key={g.id} onClick={() => { update('genero', g.id); next() }}
+                  <button key={g.id} onClick={() => autoAdvance('genero', g.id)}
                     className={`p-4 rounded-xl border-2 transition-all text-center ${
                       data.genero === g.id
                         ? 'border-gold bg-gold/10'
@@ -194,8 +244,88 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Step 3: Foco */}
           {step === 3 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <span className="text-4xl mb-3 block">🕐</span>
+                <h2 className="text-2xl font-bold gradient-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  Em que período você nasceu?
+                </h2>
+                <p className="text-purple-300/60 text-sm mt-2">
+                  O momento do nascimento influencia sua energia vital
+                </p>
+              </div>
+              <div className="space-y-2">
+                {PERIODOS.map(p => (
+                  <button key={p.id} onClick={() => autoAdvance('periodo_nascimento', p.id)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
+                      data.periodo_nascimento === p.id
+                        ? 'border-gold bg-gold/10'
+                        : 'border-purple-500/30 hover:border-purple-400/50'
+                    }`}>
+                    <span className="text-2xl">{p.icon}</span>
+                    <span>{p.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <span className="text-4xl mb-3 block">🔢</span>
+                <h2 className="text-2xl font-bold gradient-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  Qual número te atrai mais?
+                </h2>
+                <p className="text-purple-300/60 text-sm mt-2">
+                  Escolha por instinto, sem pensar demais
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[1,2,3,4,5,6,7,8,9].map(n => (
+                  <button key={n} onClick={() => { update('numero_favorito', String(n)); setTimeout(() => setStep(s => s + 1), 300) }}
+                    className={`p-4 rounded-xl border-2 transition-all text-center ${
+                      data.numero_favorito === String(n)
+                        ? 'border-gold bg-gold/10'
+                        : 'border-purple-500/30 hover:border-purple-400/50'
+                    }`}>
+                    <span className="text-2xl font-bold text-gold">{n}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <span className="text-4xl mb-3 block">🌍</span>
+                <h2 className="text-2xl font-bold gradient-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  Qual elemento você sente mais conexão?
+                </h2>
+                <p className="text-purple-300/60 text-sm mt-2">
+                  Seu elemento revela sua essência energética
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {ELEMENTOS.map(e => (
+                  <button key={e.id} onClick={() => autoAdvance('elemento', e.id)}
+                    className={`p-5 rounded-xl border-2 transition-all text-center ${
+                      data.elemento === e.id
+                        ? 'border-gold bg-gold/10'
+                        : 'border-purple-500/30 hover:border-purple-400/50'
+                    }`}>
+                    <span className="text-3xl block mb-1">{e.icon}</span>
+                    <span className="text-sm font-semibold block">{e.label}</span>
+                    <span className="text-xs text-purple-400/60">{e.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
             <div className="space-y-6">
               <div className="text-center">
                 <span className="text-4xl mb-3 block">🎯</span>
@@ -205,7 +335,7 @@ export default function QuizPage() {
               </div>
               <div className="space-y-2">
                 {FOCOS.map(f => (
-                  <button key={f.id} onClick={() => { update('foco', f.id); next() }}
+                  <button key={f.id} onClick={() => autoAdvance('foco', f.id)}
                     className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
                       data.foco === f.id
                         ? 'border-gold bg-gold/10'
@@ -219,8 +349,58 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Step 4: Status relacionamento */}
-          {step === 4 && (
+          {step === 7 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <span className="text-4xl mb-3 block">⚡</span>
+                <h2 className="text-2xl font-bold gradient-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  Qual seu maior desafio agora?
+                </h2>
+                <p className="text-purple-300/60 text-sm mt-2">
+                  Os números podem revelar caminhos para superar obstáculos
+                </p>
+              </div>
+              <div className="space-y-2">
+                {DESAFIOS.map(d => (
+                  <button key={d.id} onClick={() => autoAdvance('desafio', d.id)}
+                    className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
+                      data.desafio === d.id
+                        ? 'border-gold bg-gold/10'
+                        : 'border-purple-500/30 hover:border-purple-400/50'
+                    }`}>
+                    <span className="text-2xl">{d.icon}</span>
+                    <span>{d.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 8 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <span className="text-4xl mb-3 block">🔭</span>
+                <h2 className="text-2xl font-bold gradient-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                  Como você se sente sobre o futuro?
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {SENTIMENTOS.map(s => (
+                  <button key={s.id} onClick={() => autoAdvance('sentimento_futuro', s.id)}
+                    className={`p-5 rounded-xl border-2 transition-all text-center ${
+                      data.sentimento_futuro === s.id
+                        ? 'border-gold bg-gold/10'
+                        : 'border-purple-500/30 hover:border-purple-400/50'
+                    }`}>
+                    <span className="text-3xl block mb-1">{s.icon}</span>
+                    <span className="text-sm">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 9 && (
             <div className="space-y-6">
               <div className="text-center">
                 <span className="text-4xl mb-3 block">💑</span>
@@ -235,7 +415,7 @@ export default function QuizPage() {
                   { id: 'casado', icon: '💍', label: 'Casado(a)' },
                   { id: 'complicado', icon: '💔', label: 'É complicado' },
                 ].map(r => (
-                  <button key={r.id} onClick={() => { update('relacionamento', r.id); next() }}
+                  <button key={r.id} onClick={() => autoAdvance('relacionamento', r.id)}
                     className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center gap-3 ${
                       data.relacionamento === r.id
                         ? 'border-gold bg-gold/10'
@@ -249,8 +429,7 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Step 5: Gênero parceiro (alma gêmea) */}
-          {step === 5 && (
+          {step === 10 && (
             <div className="space-y-6">
               <div className="text-center">
                 <span className="text-4xl mb-3 block">🔮</span>
@@ -266,7 +445,7 @@ export default function QuizPage() {
                   { id: 'feminino', icon: '👩', label: 'Mulher' },
                   { id: 'masculino', icon: '👨', label: 'Homem' },
                 ].map(g => (
-                  <button key={g.id} onClick={() => { update('genero_parceiro', g.id); }}
+                  <button key={g.id} onClick={() => update('genero_parceiro', g.id)}
                     className={`p-4 rounded-xl border-2 transition-all text-center ${
                       data.genero_parceiro === g.id
                         ? 'border-gold bg-gold/10'
@@ -280,7 +459,6 @@ export default function QuizPage() {
             </div>
           )}
 
-          {/* Navigation */}
           <div className="flex justify-between mt-8">
             {step > 0 ? (
               <button onClick={prev} className="text-purple-400 hover:text-purple-300 text-sm">
@@ -288,7 +466,7 @@ export default function QuizPage() {
               </button>
             ) : <div />}
 
-            {step < totalSteps - 1 && step !== 2 && step !== 3 && step !== 4 ? (
+            {step < totalSteps - 1 && !isAutoAdvanceStep && step !== 4 ? (
               <button onClick={next} disabled={!canNext()}
                 className="btn-gold px-6 py-2 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed">
                 Continuar →
