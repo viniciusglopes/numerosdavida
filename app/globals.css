@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0118;
+  --foreground: #e8e0f0;
+  --gold: #d4a843;
+  --gold-light: #f0d68a;
+  --purple: #6b21a8;
+  --purple-light: #a855f7;
+  --purple-dark: #1a0533;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-purple: var(--purple);
+  --color-purple-light: var(--purple-light);
+  --color-purple-dark: var(--purple-dark);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 168, 67, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(212, 168, 67, 0.6); }
+}
+
+.animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.gradient-mystic {
+  background: linear-gradient(135deg, #0a0118 0%, #1a0533 30%, #0f0a2e 60%, #0a0118 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, #d4a843, #f0d68a, #d4a843);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-mystic {
+  background: rgba(26, 5, 51, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #d4a843, #f0d68a);
+  color: #0a0118;
+  font-weight: 700;
+  transition: all 0.3s;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #f0d68a, #d4a843);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(212, 168, 67, 0.4);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #6b21a8, #a855f7, #d4a843);
 }
