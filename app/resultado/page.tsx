@@ -94,8 +94,18 @@ function ResultadoContent() {
             const data = await res.json()
             if (data.status === 'approved') {
               onApproved()
-            } else if (data.status === 'pending') {
-              alert('Pagamento pendente! Assim que confirmado, seu conteúdo será desbloqueado.')
+            } else if (data.status === 'pending' && data.id) {
+              const poll = setInterval(async () => {
+                try {
+                  const check = await fetch(`/api/pagamento-status?id=${data.id}`)
+                  const result = await check.json()
+                  if (result.status === 'approved') {
+                    clearInterval(poll)
+                    onApproved()
+                  }
+                } catch {}
+              }, 5000)
+              setTimeout(() => clearInterval(poll), 600000)
             } else {
               alert('Pagamento não aprovado. Tente novamente.')
             }
