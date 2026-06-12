@@ -82,10 +82,14 @@ function ResultadoContent() {
             setCarregandoPagamentoBook(false)
           },
           onSubmit: async ({ selectedPaymentMethod, formData }: any) => {
+            const payload = {
+              ...formData,
+              description: `Números da Vida - ${amount > 8 ? 'Mapa' : 'Book'} - ${nome}`,
+            }
             const res = await fetch('/api/pagamento', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(formData),
+              body: JSON.stringify(payload),
             })
             const data = await res.json()
             if (data.status === 'approved') {

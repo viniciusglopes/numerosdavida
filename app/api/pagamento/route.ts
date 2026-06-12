@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || ''
 
@@ -21,6 +22,21 @@ export async function POST(request: NextRequest) {
     })
 
     const payment = await res.json()
+
+    if (supabase && payment.id) {
+      const email = body.payer?.email || payment.payer?.email || null
+      try {
+        await supabase.from('ndv_vendas').insert({
+          nome: payment.description || '',
+          email,
+          produto: (payment.transaction_amount || 0) > 8 ? 'mapa' : 'book',
+          valor: payment.transaction_amount || 0,
+          payment_id: String(payment.id),
+          payment_status: payment.status || 'unknown',
+          payment_detail: payment.status_detail || null,
+        })
+      } catch {}
+    }
 
     return NextResponse.json({
       status: payment.status,
