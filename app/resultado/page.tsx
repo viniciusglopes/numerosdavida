@@ -197,6 +197,59 @@ function ResultadoContent() {
           <p className="text-purple-200 text-sm">{significado.resumo}</p>
         </div>
 
+        {/* Paywall CTA - aparece entre teaser e conteúdo borrado */}
+        {!desbloqueado && !mostrarPagamento && (
+          <div className="card-mystic rounded-2xl p-6 text-center border-2 border-gold/20">
+            <span className="text-3xl mb-2 block">🔒</span>
+            <h3 className="text-xl font-bold text-gold mb-2" style={{ fontFamily: 'var(--font-playfair)' }}>
+              Desbloqueie seu Mapa Completo
+            </h3>
+            <ul className="text-sm text-purple-200 space-y-1.5 mb-4 text-left max-w-xs mx-auto">
+              <li>✅ Número da Alma e Personalidade</li>
+              <li>✅ Previsão do Ano Pessoal 2026</li>
+              <li>✅ Análise detalhada do seu perfil</li>
+              <li>✅ Compatibilidade numerológica</li>
+              <li>✅ Rosto da sua Alma Gêmea (IA)</li>
+            </ul>
+            <div className="mb-4">
+              <p className="text-xs text-purple-400 line-through">De R$ 29,90</p>
+              <p className="text-3xl font-bold text-gold">R$ 9,90</p>
+              <p className="text-xs text-purple-300">Pagamento único · Acesso imediato</p>
+            </div>
+            <button onClick={handleDesbloquear} disabled={carregandoPagamento}
+              className="btn-gold w-full py-4 rounded-full text-lg animate-pulse-gold disabled:opacity-50">
+              {carregandoPagamento ? '⏳ Carregando pagamento...' : '🔓 Desbloquear por R$ 9,90'}
+            </button>
+            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-purple-400">
+              <span>🔒 Pix</span>
+              <span>💳 Cartão</span>
+              <span>⚡ Instantâneo</span>
+            </div>
+          </div>
+        )}
+
+        {/* Bricks payment container - Mapa (aparece aqui em cima) */}
+        {mostrarPagamento && !desbloqueado && (
+          <div className="card-mystic rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
+                Pagamento Seguro
+              </h3>
+              <button onClick={() => { setMostrarPagamento(false); setCarregandoPagamento(false) }}
+                className="text-purple-400 hover:text-purple-300 text-sm">
+                ✕ Fechar
+              </button>
+            </div>
+            {carregandoPagamento && (
+              <div className="text-center py-8">
+                <span className="text-2xl animate-pulse">⏳</span>
+                <p className="text-purple-300 text-sm mt-2">Carregando formulário de pagamento...</p>
+              </div>
+            )}
+            <div id="mp-bricks-container" />
+          </div>
+        )}
+
         {/* Mapa completo (borrado se não pagou) */}
         <div className="card-mystic rounded-2xl p-6 relative overflow-hidden">
           <div className={`space-y-4 ${!desbloqueado ? 'blur-md select-none' : ''}`}>
@@ -242,62 +295,7 @@ function ResultadoContent() {
             </div>
           </div>
 
-          {/* Paywall */}
-          {!desbloqueado && !mostrarPagamento && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-purple-dark via-purple-dark/90 to-transparent rounded-2xl p-6">
-              <span className="text-4xl mb-3">🔒</span>
-              <h3 className="text-xl font-bold text-gold mb-2" style={{ fontFamily: 'var(--font-playfair)' }}>
-                Desbloqueie seu Mapa Completo
-              </h3>
-              <ul className="text-sm text-purple-200 space-y-1.5 mb-4 text-left">
-                <li>✅ Número da Alma e Personalidade</li>
-                <li>✅ Previsão do Ano Pessoal 2026</li>
-                <li>✅ Análise detalhada do seu perfil</li>
-                <li>✅ Compatibilidade numerológica</li>
-                <li>✅ Rosto da sua Alma Gêmea (IA)</li>
-              </ul>
-
-              <div className="text-center mb-4">
-                <p className="text-xs text-purple-400 line-through">De R$ 29,90</p>
-                <p className="text-3xl font-bold text-gold">R$ 9,90</p>
-                <p className="text-xs text-purple-300">Pagamento único · Acesso imediato</p>
-              </div>
-
-              <button onClick={handleDesbloquear} disabled={carregandoPagamento}
-                className="btn-gold w-full py-4 rounded-full text-lg animate-pulse-gold disabled:opacity-50">
-                {carregandoPagamento ? '⏳ Carregando pagamento...' : '🔓 Desbloquear por R$ 9,90'}
-              </button>
-
-              <div className="flex items-center gap-4 mt-4 text-xs text-purple-400">
-                <span>🔒 Pix</span>
-                <span>💳 Cartão</span>
-                <span>⚡ Instantâneo</span>
-              </div>
-            </div>
-          )}
         </div>
-
-        {/* Bricks payment container - Mapa */}
-        {mostrarPagamento && !desbloqueado && (
-          <div className="card-mystic rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gold" style={{ fontFamily: 'var(--font-playfair)' }}>
-                Pagamento Seguro
-              </h3>
-              <button onClick={() => { setMostrarPagamento(false); setCarregandoPagamento(false) }}
-                className="text-purple-400 hover:text-purple-300 text-sm">
-                ✕ Fechar
-              </button>
-            </div>
-            {carregandoPagamento && (
-              <div className="text-center py-8">
-                <span className="text-2xl animate-pulse">⏳</span>
-                <p className="text-purple-300 text-sm mt-2">Carregando formulário de pagamento...</p>
-              </div>
-            )}
-            <div id="mp-bricks-container" />
-          </div>
-        )}
 
         {/* Sucesso + Upsell Book */}
         {desbloqueado && (
